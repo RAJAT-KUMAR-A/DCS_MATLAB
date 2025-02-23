@@ -1,0 +1,20 @@
+clc; clear; close all;
+N = 1e5; M = 4; L = 4; beta = 1; Nsym = 8; EbN0dB = 100;
+snr = 10*log10(log2(M)) + EbN0dB;
+d = randi([0 M-1], 1, N);
+u = pammod(d, M);
+s = filter(rcosdesign(beta, Nsym, L), 1, upsample(u, L));
+r = awgn(s, snr, 'measured');
+vCap = filter(rcosdesign(beta, Nsym, L), 1, r);
+filtDelay = Nsym * L / 2;
+dCap = vCap(2*filtDelay+1:L:end-(2*filtDelay))/L;
+upsampled_u = upsample(u, L);
+figure;
+subplot(3,2,1); stem(u(1:20)); title('PAM Modulated Symbols');
+subplot(3,2,2); stem(upsampled_u(1:150)); title('Oversampled Symbols');
+subplot(3,2,3); plot(s(1:150), 'r'); title('Pulse Shaped Symbols');
+subplot(3,2,4); plot(r(1:150), 'r'); title('Received Signal');
+subplot(3,2,5); plot(vCap(1:150), 'r'); title('Matched Filter Output');
+subplot(3,2,6); stem(dCap(1:20)); title('Symbol Rate Sampled Output');
+figure;
+plotEyeDiagram(vCap, L, 3*L,2*filtDelay,100)

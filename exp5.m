@@ -1,0 +1,27 @@
+clc;close all;clear all;
+Fs = 1000; fc = 100; fp = 4; bit_t = 0.1;
+m = [0 0 1 1 1 1 0 0]*2-1;
+message = reshape(repmat(m, fp, 1), 1, []);
+pn_code = randi([0,1], 1, length(message))*2-1;
+DSSS = message .* pn_code;
+t = 0:1/Fs:(bit_t-1/Fs);
+carrier = cos(2*pi*fc*t);
+BPSK = reshape(kron(DSSS, carrier), 1, []);
+rx = BPSK .* reshape(kron(pn_code, ones(1, length(t))), 1, []);
+demod = rx .* reshape(repmat(carrier, 1, length(DSSS)), 1, []);
+pn_size = length(pn_code); tpn = linspace(0, length(m)*bit_t-bit_t/fp, pn_size);
+tm = 0:bit_t/fp:length(m)*bit_t-bit_t/fp;
+figure;
+subplot(3,1,1); stairs(tm, message, 'linewidth', 2); title('Message');
+subplot(3,1,2); stairs(tpn, pn_code, 'linewidth', 2); title('PN Code');
+subplot(3,1,3); stairs(tpn, DSSS, 'linewidth', 2); title('DSSS Signal');
+f = linspace(-Fs/2, Fs/2, 1024);
+figure;
+subplot(3,1,1); plot(f, abs(fftshift(fft(message, 1024))),'linewidth',2); title('Message Spectrum');
+subplot(3,1,2); plot(f, abs(fftshift(fft(pn_code, 1024))),'linewidth',2); title('PN Code Spectrum');
+subplot(3,1,3); plot(f, abs(fftshift(fft(DSSS, 1024))),'linewidth',2); title('DSSS Spectrum');
+figure;
+subplot(3,1,1); plot(f, abs(fftshift(fft(BPSK, 1024))),'linewidth',2); title('Transmitted Signal');
+subplot(3,1,2); plot(f, abs(fftshift(fft(rx, 1024))),'linewidth',2); title('Received Signal');
+subplot(3,1,3); plot(f, abs(fftshift(fft(demod, 1024))),'linewidth',2); title('Demodulated Signal');
+
